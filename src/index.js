@@ -51,6 +51,7 @@ class Game extends React.Component {
           squares: Array(9).fill(null),
         },
       ],
+      stepNumber: 0,
       xIsNext: true,
       gamer1: "",
       gamer2: "",
@@ -58,36 +59,55 @@ class Game extends React.Component {
   }
 
   handleClick(i) {
-    const history = this.state.history;
+    const history = this.state.history.slice(0, this.state.stepNumber + 1);;
     console.log(history);
     const current = history[history.length - 1];
-    console.log(current);
     const squares = current.squares.slice();
     if (calculateWinner(squares) || squares[i]) {
       return;
     }
     squares[i] = this.state.xIsNext ? "X" : "O";
     this.setState({
-      history: history.concat([{
-        squares: squares
-      }]),
+      history: history.concat([
+        {
+          squares: squares,
+        },
+      ]),
+      stepNumber: history.length,
       xIsNext: !this.state.xIsNext,
     });
   }
 
+  jumpTo(step) {
+    this.setState({
+      stepNumber: step,
+      xIsNext: (step % 2) === 0,
+    });
+  }
+
   componentDidMount() {
-    let name1 = "Nastya"; //prompt("Введите имя первого игрока");
-    let name2 = "Lesha"; //prompt("Введите имя второго игрока");
+    let name1 = prompt("Введите имя первого игрока");
+    let name2 = prompt("Введите имя второго игрока");
     this.setState({
       gamer1: name1,
       gamer2: name2,
     });
+    console.log("state- ", this.state.history);
   }
 
   render() {
     const history = this.state.history;
-    const current = history[history.length - 1];
+    const current = history[this.state.stepNumber];
     const winnerSign = calculateWinner(current.squares);
+
+    const moves = history.map((step, move) => {
+      const desc = move ? "Вернуться к ходу #" + move : "Начать игу с начала";
+      return (
+        <li key={move}>
+          <button onClick={() => this.jumpTo(move)}>{desc}</button>
+        </li>
+      );
+    });
 
     let winner;
     if (winnerSign === "X") {
@@ -102,8 +122,8 @@ class Game extends React.Component {
       status =
         "Теперь ходит: " +
         (this.state.xIsNext
-          ? `${this.state.gamer1} (X)`
-          : `${this.state.gamer2} (O)`);
+          ? `${this.state.gamer1} - (X)`
+          : `${this.state.gamer2} - (O)`);
     }
 
     return (
@@ -116,7 +136,7 @@ class Game extends React.Component {
         </div>
         <div className="game-info">
           <div>{status}</div>
-          <ol>{/* TODO */}</ol>
+          <ol>{moves}</ol>
         </div>
       </div>
     );
